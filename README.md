@@ -58,12 +58,12 @@ default
 # API
 ```
 type JSON interface {
-	K(key string) JSON
-	I(index int) JSON
-	Int(defaultV int) int
-	Float(defaultV float64) float64
-	String(defaultV string) string
-	Bool(defaultV bool) bool
+	K(key string) JSON 				// get the value pointed by the key in the JSON map
+	I(index int) JSON 				// get the value pointed by the index in the JSON array
+	Int(defaultV int) int 			// convert this JSON value to int, return defaultV if failed
+	Float(defaultV float64) float64 // convert this JSON value to float, return defaultV if failed
+	String(defaultV string) string 	// convert this JSON value to string, return defaultV if failed
+	Bool(defaultV bool) bool 		// convert this JSON value to bool, return defaultV if failed
 
 	json.Marshaler
 }
