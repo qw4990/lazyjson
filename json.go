@@ -5,12 +5,13 @@ import (
 )
 
 type JSON interface {
-	K(key string) JSON 				// get the value pointed by the key in the JSON map
-	I(index int) JSON 				// get the value pointed by the index in the JSON array
-	Int(defaultV int) int 			// convert this JSON value to int, return defaultV if failed
+	K(key string) JSON              // get the value pointed by the key in the JSON map
+	I(index int) JSON               // get the value pointed by the index in the JSON array
+	Int(defaultV int) int           // convert this JSON value to int, return defaultV if failed
 	Float(defaultV float64) float64 // convert this JSON value to float, return defaultV if failed
-	String(defaultV string) string 	// convert this JSON value to string, return defaultV if failed
-	Bool(defaultV bool) bool 		// convert this JSON value to bool, return defaultV if failed
+	String(defaultV string) string  // convert this JSON value to string, return defaultV if failed
+	Bool(defaultV bool) bool        // convert this JSON value to bool, return defaultV if failed
+	Size() int                      // number of elements in this JSON
 
 	json.Marshaler
 }
@@ -47,6 +48,10 @@ func (nj *noneJSON) Bool(defaultV bool) bool {
 
 func (nj *noneJSON) MarshalJSON() ([]byte, error) {
 	return []byte(""), nil
+}
+
+func (nj *noneJSON) Size() int {
+	return 0
 }
 
 type lazyJSON struct {
@@ -110,6 +115,16 @@ func (nj *lazyJSON) MarshalJSON() ([]byte, error) {
 	}
 }
 
+func (nj *lazyJSON) Size() int {
+	if nj.m != nil {
+		return len(nj.m)
+	} else if nj.a != nil {
+		return len(nj.a)
+	} else {
+		return 1
+	}
+}
+
 func NewJSON(data []byte) (JSON, error) {
 	var i interface{}
 	if err := json.Unmarshal(data, &i); err != nil {
@@ -122,11 +137,11 @@ func NewJSON(data []byte) (JSON, error) {
 func newJSON(i interface{}) JSON {
 	switch v := i.(type) {
 	case map[string]interface{}:
-		return &lazyJSON{m:v}
+		return &lazyJSON{m: v}
 	case []interface{}:
-		return &lazyJSON{a:v}
+		return &lazyJSON{a: v}
 	default:
-		return &lazyJSON{v:i}
+		return &lazyJSON{v: i}
 	}
 }
 
