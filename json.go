@@ -86,6 +86,19 @@ func (nj *JSON) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (nj JSON) Size() int {
+	if nj.empty() {
+		return 0
+	}
+	if nj.m != nil {
+		return len(nj.m)
+	}
+	if nj.a != nil {
+		return len(nj.a)
+	}
+	return 1
+}
+
 func (nj JSON) empty() bool {
 	return nj.a == nil && nj.m == nil && nj.v == nil
 }
