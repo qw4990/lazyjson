@@ -2,6 +2,7 @@ package lazyjson
 
 import (
 	"testing"
+	"encoding/json"
 )
 
 func TestDemo(t *testing.T) {
@@ -28,7 +29,10 @@ func TestDemo(t *testing.T) {
 			}]
 	}`
 
-	j, _ := NewJSON([]byte(data))
+	var j JSON
+	if err := json.Unmarshal([]byte(data), &j); err != nil {
+		t.Fatal(err)
+	}
 	println(j.K("str_key").String(""))
 	println(j.K("int_key").Int(0))
 	println(j.K("float_key").Float(0))
@@ -64,9 +68,9 @@ func TestJSONAll(t *testing.T) {
 			}]
 	}`
 
-	j, err := NewJSON([]byte(data))
-	if err != nil {
-		panic(err)
+	var j JSON
+	if err := json.Unmarshal([]byte(data), &j); err != nil {
+		t.Fatal(err)
 	}
 
 	if j.K("str_key").String("") != "hello" {
@@ -97,9 +101,9 @@ func TestJSONAll(t *testing.T) {
 
 func TestJSONArr(t *testing.T) {
 	data := `[1, 2, "ok", 4, 5]`
-	j, err := NewJSON([]byte(data))
-	if err != nil {
-		t.Fatalf(err.Error())
+	var j JSON
+	if err := json.Unmarshal([]byte(data), &j); err != nil {
+		t.Fatal(err)
 	}
 
 	if j.I(0).Int(0) != 1 {
@@ -122,7 +126,10 @@ func TestJSONMap(t *testing.T) {
 	}
 	}
 }`
-	j, _ := NewJSON([]byte(data))
+	var j JSON
+	if err := json.Unmarshal([]byte(data), &j); err != nil {
+		t.Fatal(err)
+	}
 	if j.K("key0").K("key1").K("int").Int(0) != 2333 {
 		t.Fatalf("2333")
 	}
@@ -140,19 +147,26 @@ func TestJSONMap(t *testing.T) {
 
 func TestJSONVal(t *testing.T) {
 	str := `"key"`
-	j, _ := NewJSON([]byte(str))
+	var j JSON
+	if err := json.Unmarshal([]byte(str), &j); err != nil {
+		t.Fatal(err)
+	}
 	if j.String("") != "key" {
 		t.Fatalf("")
 	}
 
 	number := "2333"
-	j, _ = NewJSON([]byte(number))
+	if err := json.Unmarshal([]byte(number), &j); err != nil {
+		t.Fatal(err)
+	}
 	if j.Int(0) != 2333 {
 		t.Fatalf("")
 	}
 
 	boolean := "true"
-	j, _ = NewJSON([]byte(boolean))
+	if err := json.Unmarshal([]byte(boolean), &j); err != nil {
+		t.Fatal(err)
+	}
 	if j.Bool(false) != true {
 		t.Fatalf("")
 	}
@@ -169,7 +183,10 @@ func TestJSONNone(t *testing.T) {
 	}
 	}
 }`
-	j, _ := NewJSON([]byte(data))
+	var j JSON
+	if err := json.Unmarshal([]byte(data), &j); err != nil {
+		t.Fatal(err)
+	}
 	if j.K("none").Int(233) != 233 {
 		t.Fatalf("")
 	}

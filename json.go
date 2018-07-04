@@ -4,77 +4,30 @@ import (
 	"encoding/json"
 )
 
-type JSON interface {
-	K(key string) JSON              // get the value pointed by the key in the JSON map
-	I(index int) JSON               // get the value pointed by the index in the JSON array
-	Int(defaultV int) int           // convert this JSON value to int, return defaultV if failed
-	Float(defaultV float64) float64 // convert this JSON value to float, return defaultV if failed
-	String(defaultV string) string  // convert this JSON value to string, return defaultV if failed
-	Bool(defaultV bool) bool        // convert this JSON value to bool, return defaultV if failed
-	Size() int                      // number of elements in this JSON
-
-	json.Marshaler
-}
-
-var (
-	None = new(noneJSON)
-)
-
-type noneJSON struct{}
-
-func (nj *noneJSON) K(key string) JSON {
-	return nj
-}
-
-func (nj *noneJSON) I(index int) JSON {
-	return nj
-}
-
-func (nj *noneJSON) Int(defaultV int) int {
-	return defaultV
-}
-
-func (nj *noneJSON) Float(defaultV float64) float64 {
-	return defaultV
-}
-
-func (nj *noneJSON) String(defaultV string) string {
-	return defaultV
-}
-
-func (nj *noneJSON) Bool(defaultV bool) bool {
-	return defaultV
-}
-
-func (nj *noneJSON) MarshalJSON() ([]byte, error) {
-	return []byte(""), nil
-}
-
-func (nj *noneJSON) Size() int {
-	return 0
-}
-
-type lazyJSON struct {
+type JSON struct {
 	a []interface{}
 	m map[string]interface{}
 	v interface{}
 }
 
-func (nj *lazyJSON) K(key string) JSON {
-	if nj.m == nil {
-		return None
+var empty = JSON{}
+
+func (nj JSON) K(key string) JSON {
+	if nj.empty() {
+		return empty
 	}
+
 	return newJSON(nj.m[key])
 }
 
-func (nj *lazyJSON) I(index int) JSON {
-	if index < 0 || index >= len(nj.a) {
-		return None
+func (nj JSON) I(index int) JSON {
+	if nj.empty() || index < 0 || index >= len(nj.a) {
+		return empty
 	}
 	return newJSON(nj.a[index])
 }
 
-func (nj *lazyJSON) Int(defaultV int) int {
+func (nj JSON) Int(defaultV int) int {
 	if v, ok := i2int(nj.v); ok {
 		return v
 	}
@@ -84,28 +37,28 @@ func (nj *lazyJSON) Int(defaultV int) int {
 	return defaultV
 }
 
-func (nj *lazyJSON) Float(defaultV float64) float64 {
+func (nj JSON) Float(defaultV float64) float64 {
 	if v, ok := i2float(nj.v); ok {
 		return v
 	}
 	return defaultV
 }
 
-func (nj *lazyJSON) String(defaultV string) string {
+func (nj JSON) String(defaultV string) string {
 	if v, ok := i2string(nj.v); ok {
 		return v
 	}
 	return defaultV
 }
 
-func (nj *lazyJSON) Bool(defaultV bool) bool {
+func (nj JSON) Bool(defaultV bool) bool {
 	if v, ok := i2bool(nj.v); ok {
 		return v
 	}
 	return defaultV
 }
 
-func (nj *lazyJSON) MarshalJSON() ([]byte, error) {
+func (nj JSON) MarshalJSON() ([]byte, error) {
 	if nj.m != nil {
 		return json.Marshal(nj.m)
 	} else if nj.a != nil {
@@ -115,33 +68,40 @@ func (nj *lazyJSON) MarshalJSON() ([]byte, error) {
 	}
 }
 
-func (nj *lazyJSON) Size() int {
-	if nj.m != nil {
-		return len(nj.m)
-	} else if nj.a != nil {
-		return len(nj.a)
-	} else {
-		return 1
-	}
-}
-
-func NewJSON(data []byte) (JSON, error) {
+func (nj *JSON) UnmarshalJSON(data []byte) error {
 	var i interface{}
 	if err := json.Unmarshal(data, &i); err != nil {
-		return nil, err
+		return err
 	}
 
-	return newJSON(i), nil
+	switch v := i.(type) {
+	case map[string]interface{}:
+		nj.m = v
+	case []interface{}:
+		nj.a = v
+	default:
+		nj.v = i
+	}
+
+	return nil
+}
+
+func (nj JSON) empty() bool {
+	return nj.a == nil && nj.m == nil && nj.v == nil
 }
 
 func newJSON(i interface{}) JSON {
+	if i == nil {
+		return empty
+	}
+
 	switch v := i.(type) {
 	case map[string]interface{}:
-		return &lazyJSON{m: v}
+		return JSON{m: v}
 	case []interface{}:
-		return &lazyJSON{a: v}
+		return JSON{a: v}
 	default:
-		return &lazyJSON{v: i}
+		return JSON{v: i}
 	}
 }
 
