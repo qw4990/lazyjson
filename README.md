@@ -30,7 +30,10 @@ this is an example:
 			}]
 	}`
 
-	j, _ := NewJSON([]byte(data))
+	var j JSON
+	if err := json.Unmarshal([]byte(data), &j); err != nil {
+		t.Fatal(err)
+	}
 	println(j.K("str_key").String(""))
 	println(j.K("int_key").Int(0))
 	println(j.K("float_key").Float(0))
@@ -66,5 +69,6 @@ type JSON interface {
 	Bool(defaultV bool) bool 		// convert this JSON value to bool, return defaultV if failed
 
 	json.Marshaler
+	json.UnMarshaler
 }
 ```
